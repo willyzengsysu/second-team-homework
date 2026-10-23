@@ -180,7 +180,7 @@ def main(argv: list[str] | None = None) -> None:
     save_csv(d.rename("diff").reset_index().rename(columns={"index": "period"}),
              paths["tables"] / "hl_diff_monthly.csv")
     log.info("H−L 月度差 %.4f（年化 %.2f%%），t=%.2f，95%%CI [%.4f, %.4f]，%s",
-             d.mean(), (1 + d.mean()) ** 12 - 1, hl["t_stat"].iloc[0], lo_t, hi_t, verdict)
+             d.mean(), ((1 + d.mean()) ** 12 - 1) * 100, hl["t_stat"].iloc[0], lo_t, hi_t, verdict)
 
     # ---- 5. 个股检验期统计（用于个股 SML）----
     rows = []

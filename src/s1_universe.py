@@ -113,8 +113,12 @@ def build_universe(cfg: dict, log, force: bool = False) -> pd.DataFrame:
         imap = fetch_industry()
         save_csv(imap, ind_path)
     uni = uni.merge(imap, on="code", how="left")
-    uni["industry"] = uni["industry"].fillna(s["industry_unknown_label"])
-    uni["sector"] = uni["sector"].fillna(s["industry_unknown_label"])
+    # baostock 对退市股返回空字符串，必须先归一化再填空值，否则会被 value_counts 丢弃
+    for col in ("industry", "sector"):
+        uni[col] = (
+            uni[col].fillna("").astype(str).str.strip()
+            .replace({"": s["industry_unknown_label"], "nan": s["industry_unknown_label"]})
+        )
 
     uni = uni[uni["board"].isin(s["boards"] + ["退市股"])].copy()
     uni = uni.sort_values("code").reset_index(drop=True)

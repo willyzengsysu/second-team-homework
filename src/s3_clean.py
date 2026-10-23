@@ -41,6 +41,21 @@ from src.common import (
 # --------------------------------------------------------------------------
 # 单只股票 -> 月度收益序列
 # --------------------------------------------------------------------------
+def load_candidates(cfg: dict) -> pd.DataFrame:
+    """读候选池，并把行业字段的空值/空串统一记为「未分类」。"""
+    paths = project_paths(cfg)
+    cand = load_csv(paths["interim"] / "candidates.csv")
+    cand["code"] = cand["code"].astype(str).str.zfill(6)
+    label = cfg["sample"]["industry_unknown_label"]
+    for col in ("industry", "sector"):
+        if col in cand.columns:
+            cand[col] = (
+                cand[col].fillna("").astype(str).str.strip()
+                .replace({"": label, "nan": label})
+            )
+    return cand
+
+
 def stock_monthly_returns(price: pd.DataFrame, grid: pd.PeriodIndex,
                           zero_marked: bool) -> tuple[pd.Series, pd.Series]:
     """返回 (收益率, 停牌标记)；窗口外为 NaN，窗口内缺失月按停牌处理。"""
@@ -68,7 +83,8 @@ def stock_monthly_returns(price: pd.DataFrame, grid: pd.PeriodIndex,
         ret[suspended] = np.nan
     ret[filled.isna()] = np.nan
 
-    return ret.reindex(grid), suspended.reindex(grid).fillna(False).astype(bool)
+    susp_out = suspended.reindex(grid).astype("boolean").fillna(False).astype(bool)
+    return ret.reindex(grid), susp_out
 
 
 # --------------------------------------------------------------------------
@@ -78,8 +94,7 @@ def build_panel(cfg: dict, log) -> tuple[pd.DataFrame, pd.DataFrame]:
     paths = project_paths(cfg)
     s = cfg["sample"]
 
-    cand = load_csv(paths["interim"] / "candidates.csv")
-    cand["code"] = cand["code"].astype(str).str.zfill(6)
+    cand = load_candidates(cfg)
     market = load_csv(paths["interim"] / "market_monthly.csv").rename(columns={"index": "period"})
     rf = load_csv(paths["interim"] / "rf_monthly.csv").rename(columns={"index": "period"})
 
@@ -247,8 +262,7 @@ def main(argv: list[str] | None = None) -> None:
     log.info("S3 开始：构建面板")
 
     panel, exclusions = build_panel(cfg, log)
-    cand = load_csv(paths["interim"] / "candidates.csv")
-    cand["code"] = cand["code"].astype(str).str.zfill(6)
+    cand = load_candidates(cfg)
 
     sample, excl2 = finalize_sample(panel, cand, cfg, log)
     all_excl = pd.concat([exclusions, excl2[["code", "name", "industry", "valid_est_months", "reason"]]],

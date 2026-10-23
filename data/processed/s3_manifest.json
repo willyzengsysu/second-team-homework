@@ -1,7 +1,7 @@
 {
   "stage": "s3_clean",
-  "timestamp": "2026-10-23T22:14:19",
-  "git_rev": "58c8a04",
+  "timestamp": "2026-10-23T22:57:39",
+  "git_rev": "be0e4ef",
   "config_sha256": "9b3a47d97577e77405f20f4aefde6dc94642672511bc8394a31e7c3a93e6442b",
   "versions": {
     "pandas": "2.3.3",
@@ -14,10 +14,10 @@
     "python": "3.12.14"
   },
   "extra": {
-    "sample_n": 52,
-    "industries": 21,
-    "panel_rows": 6292,
-    "suspended_rows": 90,
-    "excluded_n": 375
+    "sample_n": 199,
+    "industries": 57,
+    "panel_rows": 24079,
+    "suspended_rows": 671,
+    "excluded_n": 61
   }
 }

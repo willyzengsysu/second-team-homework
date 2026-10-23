@@ -72,8 +72,10 @@ def plot_sml(ax, x, y, fit, mkt_slope, title, xlim, ylim, point_labels=None, ann
             label=f"CAPM 基准线(斜率={mkt_slope:.3f})", zorder=4)
 
     if annotate and point_labels is not None:
-        for xi, yi, lab in zip(x, y, point_labels):
-            ax.annotate(lab, (xi, yi), textcoords="offset points", xytext=(6, 5), fontsize=8)
+        for i, (xi, yi, lab) in enumerate(zip(x, y, point_labels)):
+            dx, dy = (8, 8) if i % 2 == 0 else (8, -16)
+            ax.annotate(lab, (xi, yi), textcoords="offset points", xytext=(dx, dy),
+                        fontsize=8, color="#2c3e50")
 
     ax.axhline(0, color="black", linewidth=0.6, alpha=0.5)
     ax.set_xlim(*xlim)
@@ -101,7 +103,7 @@ def main(argv: list[str] | None = None) -> None:
     test = set(str(p) for p in test_months(cfg))
     mkt_ex = panel[panel["period"].isin(test)].groupby("period")["mret_ex"].first().dropna()
     mkt_slope = float(mkt_ex.mean())
-    log.info("检验期市场平均月度超额收益 %.4f（年化 %.2f%%）", mkt_slope, (1 + mkt_slope) ** 12 - 1)
+    log.info("检验期市场平均月度超额收益 %.4f（年化 %.2f%%）", mkt_slope, ((1 + mkt_slope) ** 12 - 1) * 100)
 
     fit_i = cross_section_fit(stock["beta_test"], stock["mean_excess_ret"])
     fit_p = cross_section_fit(port["beta_test"], port["mean_excess_ret"])

@@ -1,7 +1,7 @@
 {
   "stage": "s2_fetch",
-  "timestamp": "2026-10-23T21:54:14",
-  "git_rev": null,
+  "timestamp": "2026-10-23T22:51:49",
+  "git_rev": "be0e4ef",
   "config_sha256": "9b3a47d97577e77405f20f4aefde6dc94642672511bc8394a31e7c3a93e6442b",
   "versions": {
     "pandas": "2.3.3",
@@ -17,7 +17,7 @@
     "stocks_requested": 260,
     "market_source": "中证全指全收益",
     "market_kind": "total_return",
-    "market_months": 119,
+    "market_months": 120,
     "rf_months": 120,
     "rf_mean_annual_pct": 2.3767508333333334
   }

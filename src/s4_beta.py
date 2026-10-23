@@ -119,12 +119,13 @@ def main(argv: list[str] | None = None) -> None:
     log.info("定义法一致性：最大绝对差 %.2e（理论上应为 0，仅浮点误差）",
              idf["abs_diff"].max() if len(idf) else float("nan"))
 
-    # 低/中/高三只核对表
-    qs = beta["beta"].quantile([0.2, 0.5, 0.8]).values
+    # 低/中/高三只核对表（从在市股票中挑，避免用退市股作示例）
+    pool = beta[beta["status"] == "listed"] if (beta["status"] == "listed").any() else beta
+    qs = pool["beta"].quantile([0.2, 0.5, 0.8]).values
     picked = []
     for label, q in zip(["低贝塔", "中贝塔", "高贝塔"], qs):
-        idx = (beta["beta"] - q).abs().idxmin()
-        picked.append({"level": label, **beta.loc[idx].to_dict()})
+        idx = (pool["beta"] - q).abs().idxmin()
+        picked.append({"level": label, **pool.loc[idx].to_dict()})
 
     rows = []
     for p in picked:
