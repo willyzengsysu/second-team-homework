@@ -1,0 +1,32 @@
+{
+  "stage": "s5_portfolio",
+  "timestamp": "2026-10-23T22:18:14",
+  "git_rev": "58c8a04",
+  "config_sha256": "9b3a47d97577e77405f20f4aefde6dc94642672511bc8394a31e7c3a93e6442b",
+  "versions": {
+    "pandas": "2.3.3",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "statsmodels": "0.15.0",
+    "matplotlib": "3.11.2",
+    "akshare": "1.19.3",
+    "yaml": "6.0.3",
+    "python": "3.12.14"
+  },
+  "extra": {
+    "groups": [
+      "G1(低β)",
+      "G2",
+      "G3",
+      "G4",
+      "G5(高β)"
+    ],
+    "hl_mean_monthly": 0.006603475205576315,
+    "hl_ci_t": [
+      -0.009571545546843363,
+      0.02277849595799599
+    ],
+    "spearman": 0.42832749935968584,
+    "group_beta_monotonic": false
+  }
+}

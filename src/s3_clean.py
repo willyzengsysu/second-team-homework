@@ -68,7 +68,7 @@ def stock_monthly_returns(price: pd.DataFrame, grid: pd.PeriodIndex,
         ret[suspended] = np.nan
     ret[filled.isna()] = np.nan
 
-    return ret.reindex(grid), suspended.reindex(grid).fillna(False)
+    return ret.reindex(grid), suspended.reindex(grid).fillna(False).astype(bool)
 
 
 # --------------------------------------------------------------------------
@@ -80,12 +80,14 @@ def build_panel(cfg: dict, log) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     cand = load_csv(paths["interim"] / "candidates.csv")
     cand["code"] = cand["code"].astype(str).str.zfill(6)
-    market = load_csv(paths["interim"] / "market_monthly.csv")
-    rf = load_csv(paths["interim"] / "rf_monthly.csv")
+    market = load_csv(paths["interim"] / "market_monthly.csv").rename(columns={"index": "period"})
+    rf = load_csv(paths["interim"] / "rf_monthly.csv").rename(columns={"index": "period"})
 
     grid = month_range("2014-12", s["test_end"])
-    mret = market.set_index("period")["mret"].reindex(grid)
-    rf_s = rf.set_index("period")["rf"].reindex(grid)
+    grid_str = pd.Index([str(p) for p in grid])
+    # 市场与无风险序列统一按 "YYYY-MM" 字符串对齐，与 panel["period"] 保持一致
+    mret = market.set_index("period")["mret"].reindex(grid_str)
+    rf_s = rf.set_index("period")["rf"].reindex(grid_str)
 
     rows, exclusions = [], []
     zero_marked = cfg["missing"]["full_month_suspension"] == "zero_marked"

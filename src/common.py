@@ -53,6 +53,12 @@ def get_logger(cfg: dict | None = None, name: str = "capm") -> logging.Logger:
     logger.propagate = False
     fmt = logging.Formatter("%(asctime)s | %(levelname)-7s | %(message)s", "%Y-%m-%d %H:%M:%S")
 
+    # Windows 控制台默认 GBK，遇到 "−" "²" 这类字符会抛 UnicodeEncodeError
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:  # noqa: BLE001
+        pass
+
     sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(fmt)
     logger.addHandler(sh)
@@ -126,7 +132,11 @@ def save_csv(df: pd.DataFrame, path: str | Path, index: bool = False) -> Path:
 
 
 def load_csv(path: str | Path) -> pd.DataFrame:
-    return pd.read_csv(path, encoding="utf-8-sig")
+    """读取 CSV。股票代码一律按 6 位字符串处理，避免 "000001" 被解析成 1。"""
+    df = pd.read_csv(path, encoding="utf-8-sig")
+    if "code" in df.columns:
+        df["code"] = df["code"].astype(str).str.zfill(6)
+    return df
 
 
 def save_json(obj: dict, path: str | Path) -> Path:

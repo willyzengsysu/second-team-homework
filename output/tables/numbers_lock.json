@@ -1,0 +1,82 @@
+{
+  "sample_n": 52,
+  "industries": 21,
+  "beta_est_mean": 1.065659500208659,
+  "beta_est_median": 0.955229624953395,
+  "beta_check_max_diff": 5.551115123125784e-16,
+  "group_beta_test": [
+    0.813199,
+    0.677576,
+    0.779396,
+    1.016715,
+    1.094379
+  ],
+  "group_mean_excess": [
+    0.005117,
+    0.005117,
+    0.006774,
+    0.007171,
+    0.01172
+  ],
+  "group_alpha": [
+    0.003299,
+    0.003602,
+    0.005031,
+    0.004897,
+    0.009273
+  ],
+  "hl_mean_monthly": 0.0066034752055763,
+  "hl_ci_t": [
+    -0.0095715455468433,
+    0.0227784959579959
+  ],
+  "hl_ci_boot": [
+    -0.0090589350488421,
+    0.0256126445728937
+  ],
+  "spearman": 0.4283274993596858,
+  "beta_slope_test_on_hist": 0.2478220931975029,
+  "sml_individual": {
+    "n": 52,
+    "intercept": -0.0002965349901309,
+    "slope": 0.0085572505298811,
+    "se_intercept": 0.0034557271347744,
+    "se_slope": 0.0038681081689225,
+    "r2": 0.14187796404233,
+    "resid_sd": 0.0070869238632341
+  },
+  "sml_portfolio": {
+    "n": 5,
+    "intercept": -0.0042598764199432,
+    "slope": 0.0130550530099591,
+    "se_intercept": 0.0040608627484243,
+    "se_slope": 0.0051254885668567,
+    "r2": 0.6989861605212762,
+    "resid_sd": 0.0014847328481116
+  },
+  "n_stocks_test": 52,
+  "sources": {
+    "beta_est.csv": "b980d021bfc1d5b4",
+    "portfolio_stats.csv": "4e1450465a32e871",
+    "hl_diff.csv": "ba4f84dda4519ef1",
+    "beta_stability.csv": "bebd4fa8d1b0ce43",
+    "sml_fit.csv": "1878a74153cf3676"
+  },
+  "manifest": {
+    "stage": "s7_report",
+    "timestamp": "2026-10-23T22:18:42",
+    "git_rev": "58c8a04",
+    "config_sha256": "9b3a47d97577e77405f20f4aefde6dc94642672511bc8394a31e7c3a93e6442b",
+    "versions": {
+      "pandas": "2.3.3",
+      "numpy": "2.5.4",
+      "scipy": "1.18.1",
+      "statsmodels": "0.15.0",
+      "matplotlib": "3.11.2",
+      "akshare": "1.19.3",
+      "yaml": "6.0.3",
+      "python": "3.12.14"
+    },
+    "extra": {}
+  }
+}

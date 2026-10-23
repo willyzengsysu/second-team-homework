@@ -1,0 +1,23 @@
+{
+  "stage": "s4_beta",
+  "timestamp": "2026-10-23T22:17:58",
+  "git_rev": "58c8a04",
+  "config_sha256": "9b3a47d97577e77405f20f4aefde6dc94642672511bc8394a31e7c3a93e6442b",
+  "versions": {
+    "pandas": "2.3.3",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "statsmodels": "0.15.0",
+    "matplotlib": "3.11.2",
+    "akshare": "1.19.3",
+    "yaml": "6.0.3",
+    "python": "3.12.14"
+  },
+  "extra": {
+    "n_stocks": 52,
+    "beta_mean": 1.065659500208659,
+    "beta_median": 0.955229624953395,
+    "max_abs_diff_definition": 2.6645352591003757e-15,
+    "hac_lags": 6
+  }
+}

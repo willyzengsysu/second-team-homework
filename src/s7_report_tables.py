@@ -130,6 +130,7 @@ def main(argv: list[str] | None = None) -> None:
     t6 = sml.copy()
     t6["intercept"] = t6["intercept"].map(lambda v: fmt(v, 5))
     t6["slope"] = t6["slope"].map(fmt)
+    t6["se_slope"] = t6["se_slope"].map(lambda v: fmt(v, 5))
     t6["r2"] = t6["r2"].map(fmt)
     t6["resid_sd"] = t6["resid_sd"].map(lambda v: fmt(v, 5))
     t6 = t6[["scope", "n", "intercept", "slope", "se_slope", "r2", "resid_sd"]]
