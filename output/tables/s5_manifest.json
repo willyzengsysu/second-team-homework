@@ -1,8 +1,8 @@
 {
   "stage": "s5_portfolio",
-  "timestamp": "2026-10-23T22:59:18",
-  "git_rev": "be0e4ef",
-  "config_sha256": "9b3a47d97577e77405f20f4aefde6dc94642672511bc8394a31e7c3a93e6442b",
+  "timestamp": "2026-10-24T00:27:38",
+  "git_rev": "366ee5d",
+  "config_sha256": "f71bebb1d0f1b4190a5df47333b8b620f1a3d733698d69b979b04528435da825",
   "versions": {
     "pandas": "2.3.3",
     "numpy": "2.5.4",
@@ -21,12 +21,12 @@
       "G4",
       "G5(高β)"
     ],
-    "hl_mean_monthly": 0.0035499143551058023,
+    "hl_mean_monthly": 0.004895324519652851,
     "hl_ci_t": [
-      -0.006443087733193754,
-      0.013542916443405358
+      -0.007031127650288846,
+      0.016821776689594548
     ],
-    "spearman": 0.1698507438899027,
+    "spearman": 0.3235617481346124,
     "group_beta_monotonic": false
   }
 }

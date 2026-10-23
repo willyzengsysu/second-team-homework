@@ -62,8 +62,14 @@ def cross_section_fit(x: pd.Series, y: pd.Series) -> dict:
 
 
 def plot_sml(ax, x, y, fit, mkt_slope, title, xlim, ylim, point_labels=None, annotate=False):
-    ax.scatter(x, y, s=26 if len(x) > 10 else 70, alpha=0.7,
-               edgecolor="white", linewidth=0.5, zorder=3, label="样本点")
+    if annotate and point_labels is not None:
+        # 组合只有 5 个点，直接把组名写进图例，避免标注重叠
+        for xi, yi, lab in zip(x, y, point_labels):
+            ax.scatter([xi], [yi], s=70, alpha=0.85, edgecolor="white", linewidth=0.6,
+                       zorder=3, label=f"{lab}  β={xi:.2f}")
+    else:
+        ax.scatter(x, y, s=26, alpha=0.7, edgecolor="white", linewidth=0.5,
+                   zorder=3, label="样本点")
 
     xs = np.linspace(xlim[0], xlim[1], 50)
     ax.plot(xs, fit["intercept"] + fit["slope"] * xs, color="#c0392b", linewidth=1.6,
@@ -71,19 +77,13 @@ def plot_sml(ax, x, y, fit, mkt_slope, title, xlim, ylim, point_labels=None, ann
     ax.plot(xs, mkt_slope * xs, color="#2c3e50", linewidth=1.5, linestyle="--",
             label=f"CAPM 基准线(斜率={mkt_slope:.3f})", zorder=4)
 
-    if annotate and point_labels is not None:
-        for i, (xi, yi, lab) in enumerate(zip(x, y, point_labels)):
-            dx, dy = (8, 8) if i % 2 == 0 else (8, -16)
-            ax.annotate(lab, (xi, yi), textcoords="offset points", xytext=(dx, dy),
-                        fontsize=8, color="#2c3e50")
-
     ax.axhline(0, color="black", linewidth=0.6, alpha=0.5)
     ax.set_xlim(*xlim)
     ax.set_ylim(*ylim)
     ax.set_xlabel("检验期贝塔")
     ax.set_ylabel("平均月度超额收益")
     ax.set_title(title, fontsize=11)
-    ax.legend(fontsize=8, loc="upper left")
+    ax.legend(fontsize=7.5, loc="upper left")
 
 
 def main(argv: list[str] | None = None) -> None:

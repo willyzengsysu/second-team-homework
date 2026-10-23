@@ -1,8 +1,8 @@
 {
   "stage": "s2_fetch",
-  "timestamp": "2026-10-23T22:51:49",
-  "git_rev": "be0e4ef",
-  "config_sha256": "9b3a47d97577e77405f20f4aefde6dc94642672511bc8394a31e7c3a93e6442b",
+  "timestamp": "2026-10-24T00:13:19",
+  "git_rev": "366ee5d",
+  "config_sha256": "f71bebb1d0f1b4190a5df47333b8b620f1a3d733698d69b979b04528435da825",
   "versions": {
     "pandas": "2.3.3",
     "numpy": "2.5.4",
@@ -14,7 +14,7 @@
     "python": "3.12.14"
   },
   "extra": {
-    "stocks_requested": 260,
+    "stocks_requested": 300,
     "market_source": "中证全指全收益",
     "market_kind": "total_return",
     "market_months": 120,

@@ -56,12 +56,13 @@ def allocate(counts: pd.Series, n: int) -> pd.Series:
     return alloc.astype(int)
 
 
-def draw_candidates(universe: pd.DataFrame, cfg: dict, log) -> pd.DataFrame:
-    s = cfg["sample"]
-    n_cand = int(math.ceil(s["target_n"] * s["oversample_ratio"]))
-    rng = np.random.default_rng(int(cfg["project"]["seed"]))
+def draw_tranche(universe: pd.DataFrame, n: int, seed: int, tag: str) -> pd.DataFrame:
+    """按行业比例在给定股票池里抽一层。"""
+    if n <= 0 or universe.empty:
+        return pd.DataFrame(columns=["code", "industry", "stratum_size", "quota", "tranche"])
 
-    quotas = allocate(universe["industry"].value_counts(), n_cand).sort_index()
+    rng = np.random.default_rng(seed)
+    quotas = allocate(universe["industry"].value_counts(), n).sort_index()
 
     picks = []
     for ind, q in quotas.items():
@@ -71,11 +72,37 @@ def draw_candidates(universe: pd.DataFrame, cfg: dict, log) -> pd.DataFrame:
             continue
         idx = rng.choice(len(pool), size=take, replace=False)
         picks.extend(
-            {"code": pool[i], "industry": ind, "stratum_size": len(pool), "quota": take} for i in idx
+            {"code": pool[i], "industry": ind, "stratum_size": len(pool), "quota": take, "tranche": tag}
+            for i in idx
         )
+    return pd.DataFrame(picks)
 
-    cand = pd.DataFrame(picks).merge(universe, on=["code", "industry"], how="left")
-    log.info("候选池 %d 只，覆盖 %d 个行业层", len(cand), cand["industry"].nunique())
+
+def draw_candidates(universe: pd.DataFrame, cfg: dict, log) -> pd.DataFrame:
+    """两段式抽样：基础池 + 追加池。
+
+    追加池的作用：基础池里总有一部分股票因估计期不足 48 个月被剔除，
+    追加一批候选后，合格股票数才能补足到 target_n，同时不改动基础池的随机结果
+    （避免重复抓取已有行情）。
+    """
+    s = cfg["sample"]
+    seed = int(cfg["project"]["seed"])
+    n_base = int(math.ceil(s["target_n"] * s["oversample_ratio"]))
+    n_extra = int(s.get("extra_candidates", 0))
+
+    base = draw_tranche(universe, n_base, seed, "base")
+    cand = base
+
+    if n_extra > 0:
+        remaining = universe[~universe["code"].isin(base["code"])]
+        extra = draw_tranche(remaining, n_extra, seed + 11, "extra")
+        cand = pd.concat([base, extra], ignore_index=True)
+
+    cand = cand.merge(universe.drop(columns=["industry"]), on="code", how="left")
+    log.info(
+        "候选池 %d 只（基础 %d + 追加 %d），覆盖 %d 个行业层",
+        len(cand), len(base), len(cand) - len(base), cand["industry"].nunique(),
+    )
     return cand.sort_values(["industry", "code"]).reset_index(drop=True)
 
 

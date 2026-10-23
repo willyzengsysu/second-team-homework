@@ -32,7 +32,8 @@ sample:
   test_end: "2024-12-31"
   min_est_months: 48            # 估计期至少 48 个有效配对月份
   target_n: 200                 # 最终样本股票数
-  oversample_ratio: 1.30        # 候选池冗余系数（先多抽，按 48 个月规则筛选后补足）
+  oversample_ratio: 1.30        # 基础候选池 = target_n × 该系数
+  extra_candidates: 40          # 基础池之外追加的候选（用于补足 48 个月规则剔除的部分）
   boards: ["沪市主板", "科创板", "深市主板", "创业板"]
   industry_unknown_label: "未分类"
 

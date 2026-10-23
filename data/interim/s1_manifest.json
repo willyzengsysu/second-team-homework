@@ -1,8 +1,8 @@
 {
   "stage": "s1_universe",
-  "timestamp": "2026-10-23T21:32:21",
-  "git_rev": null,
-  "config_sha256": "9b3a47d97577e77405f20f4aefde6dc94642672511bc8394a31e7c3a93e6442b",
+  "timestamp": "2026-10-23T23:32:10",
+  "git_rev": "366ee5d",
+  "config_sha256": "f71bebb1d0f1b4190a5df47333b8b620f1a3d733698d69b979b04528435da825",
   "versions": {
     "pandas": "2.3.3",
     "numpy": "2.5.4",
@@ -17,7 +17,7 @@
     "universe_n": 3775,
     "listed_n": 3538,
     "delisted_after_asof_n": 237,
-    "industry_layers": 85,
-    "candidates_n": 260
+    "industry_layers": 84,
+    "candidates_n": 300
   }
 }

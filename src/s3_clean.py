@@ -183,11 +183,13 @@ def finalize_sample(panel: pd.DataFrame, cand: pd.DataFrame, cfg: dict, log) -> 
 
     sample = pool[pool["code"].isin(picks)].copy()
     sample["group_quota"] = sample["industry"].map(quotas)
-    log.info("最终样本 %d 只，覆盖 %d 个行业", len(sample), sample["industry"].nunique())
-    return sample, excl
+    log.info("最终样本 %d 只（合格 %d 只，未抽中 %d 只），覆盖 %d 个行业",
+             len(sample), len(pool), len(pool) - len(sample), sample["industry"].nunique())
+    return sample, excl, len(pool)
 
 
-def write_docs(cfg: dict, panel: pd.DataFrame, sample: pd.DataFrame, excl: pd.DataFrame, log) -> None:
+def write_docs(cfg: dict, panel: pd.DataFrame, sample: pd.DataFrame, excl: pd.DataFrame,
+               log, n_eligible: int) -> None:
     paths = project_paths(cfg)
     docs = paths["processed"].parent.parent / "docs"
     docs.mkdir(parents=True, exist_ok=True)
@@ -202,8 +204,9 @@ def write_docs(cfg: dict, panel: pd.DataFrame, sample: pd.DataFrame, excl: pd.Da
 | 步骤 | 数量 | 说明 |
 |---|---|---|
 | 冻结日（{cfg['sample']['universe_asof']}）在市 A 股 | {len(pd.read_csv(paths['interim'] / 'universe.csv', encoding='utf-8-sig', dtype={'code': str}))} | 含此后退市股票 |
-| 行业分层抽样候选池 | {len(pd.read_csv(paths['interim'] / 'candidates.csv', encoding='utf-8-sig', dtype={'code': str}))} | 目标 200 × 冗余 1.3 |
-| 估计期有效月份 ≥ {cfg['sample']['min_est_months']} | {len(sample)} | 剔除不足 48 个月的股票 |
+| 行业分层抽样候选池 | {len(pd.read_csv(paths['interim'] / 'candidates.csv', encoding='utf-8-sig', dtype={'code': str}))} | 基础 260 + 追加 40 |
+| 估计期有效月份 ≥ {cfg['sample']['min_est_months']} | {n_eligible} | 剔除 {len(excl)} 只不足 48 个月的股票 |
+| 随机抽取入样 | {len(sample)} | 合格但未抽中 {n_eligible - len(sample)} 只 |
 | **最终样本** | **{len(sample)}** | 覆盖 {n_ind} 个行业 |
 
 ## 剔除原因
@@ -264,7 +267,7 @@ def main(argv: list[str] | None = None) -> None:
     panel, exclusions = build_panel(cfg, log)
     cand = load_candidates(cfg)
 
-    sample, excl2 = finalize_sample(panel, cand, cfg, log)
+    sample, excl2, n_eligible = finalize_sample(panel, cand, cfg, log)
     all_excl = pd.concat([exclusions, excl2[["code", "name", "industry", "valid_est_months", "reason"]]],
                          ignore_index=True) if len(exclusions) else excl2
 
@@ -277,7 +280,7 @@ def main(argv: list[str] | None = None) -> None:
     save_csv(wide.reset_index(), paths["processed"] / "returns_wide.csv")
     save_csv(sample, paths["processed"] / "sample.csv")
     save_csv(all_excl, paths["processed"] / "exclusion_log.csv")
-    write_docs(cfg, panel_out, sample, all_excl, log)
+    write_docs(cfg, panel_out, sample, all_excl, log, n_eligible)
 
     # 概览
     est_n = panel_out[panel_out["period"].isin([str(p) for p in est_months(cfg)])]["ret_ex"].notna().sum()
