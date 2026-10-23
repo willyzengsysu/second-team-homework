@@ -1,0 +1,23 @@
+{
+  "stage": "s1_universe",
+  "timestamp": "2026-10-23T21:32:21",
+  "git_rev": null,
+  "config_sha256": "9b3a47d97577e77405f20f4aefde6dc94642672511bc8394a31e7c3a93e6442b",
+  "versions": {
+    "pandas": "2.3.3",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "statsmodels": "0.15.0",
+    "matplotlib": "3.11.2",
+    "akshare": "1.19.3",
+    "yaml": "6.0.3",
+    "python": "3.12.14"
+  },
+  "extra": {
+    "universe_n": 3775,
+    "listed_n": 3538,
+    "delisted_after_asof_n": 237,
+    "industry_layers": 85,
+    "candidates_n": 260
+  }
+}

@@ -1,0 +1,96 @@
+# ============================================================
+# 项目全局配置（所有口径参数集中在此，改口径只改这里）
+# 对应任务书：第二次团队作业 —— 高贝塔股票是否获得更高收益
+#
+# 数据源经实测选定（探测记录见 docs/数据源探测.md）：
+#   - 股票名单：上交所/深交所官方接口（含退市名单）
+#   - 行业分类：申万一级行业（31 类）
+#   - 个股行情：腾讯财经 月度后复权（含分红再投资，含退市股历史）
+#   - 市场指数：中证指数官网 H00985 中证全指全收益（官方全收益口径）
+#   - 无风险利率：中债国债收益率曲线 1 年期
+# ============================================================
+
+project:
+  name: capm-beta-portfolio
+  title: 高贝塔股票是否获得更高收益——基于个股与投资组合的CAPM实证分析
+  seed: 20261023          # 抽样随机种子（固定，保证可复现）
+
+paths:
+  raw: data/raw           # 网络抓取缓存（不入库）
+  interim: data/interim   # 中间结果
+  processed: data/processed
+  tables: output/tables
+  figures: output/figures
+  logs: logs
+
+# ---------------- 样本与区间 ----------------
+sample:
+  universe_asof: "2019-12-31"   # 股票池冻结日：只用该日已公开信息
+  est_start: "2015-01-01"
+  est_end: "2019-12-31"
+  test_start: "2020-01-01"
+  test_end: "2024-12-31"
+  min_est_months: 48            # 估计期至少 48 个有效配对月份
+  target_n: 200                 # 最终样本股票数
+  oversample_ratio: 1.30        # 候选池冗余系数（先多抽，按 48 个月规则筛选后补足）
+  boards: ["沪市主板", "科创板", "深市主板", "创业板"]
+  industry_unknown_label: "未分类"
+
+# ---------------- 市场基准 ----------------
+market:
+  primary:
+    provider: csindex
+    code: "H00985"
+    name: "中证全指全收益"
+    kind: total_return
+    url: "https://www.csindex.com.cn/csindex-home/perf/index-perf"
+  fallback:
+    provider: tencent
+    symbol: "sh000985"
+    name: "中证全指"
+    kind: price
+    url: "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
+
+# ---------------- 无风险利率 ----------------
+# 1 年期国债到期收益率；年化 -> 月度：compound = (1+y)^(1/12)-1
+riskfree:
+  provider: akshare
+  api: bond_china_yield
+  curve_keyword: "国债"
+  term_column: "1年"
+  annual_to_monthly: compound    # compound | simple
+  align: month_end               # 每月最后一个交易日
+
+# ---------------- 收益率口径 ----------------
+returns:
+  adjust: hfq                    # 腾讯复权口径：hfq=后复权（含分红再投资）
+  min_close: 0.01
+
+# ---------------- 缺失值处理 ----------------
+# full_month_suspension: zero_marked -> 整月停牌收益记 0 但打标（经济真实值，不是填补）
+#                        strict      -> 整月停牌记缺失（用于敏感性检验）
+# missing_return: drop_from_portfolio_average -> 组合均值只用可得成员（恢复等权）
+missing:
+  full_month_suspension: zero_marked
+  missing_return: drop_from_portfolio_average
+
+# ---------------- 组合构建 ----------------
+portfolio:
+  n_groups: 5
+  weighting: equal
+  rebalance: monthly             # 每月初恢复等权
+  sort_by: raw_beta              # 按贝塔数值排序（非绝对值）
+  group_labels: ["G1(低β)", "G2", "G3", "G4", "G5(高β)"]
+
+# ---------------- 回归 ----------------
+regression:
+  intercept: true
+  cov_type: HAC                  # 报告主口径：Newey-West
+  hac_maxlags: 6
+  ols_cov_type: nonrobust        # 定义法核对时与普通 OLS 对齐
+
+# ---------------- 输出 ----------------
+output:
+  figure_dpi: 200
+  chinese_font: ["Microsoft YaHei", "SimHei", "DejaVu Sans"]
+  decimal: 4
