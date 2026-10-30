@@ -2,10 +2,10 @@
 # 项目全局配置（所有口径参数集中在此，改口径只改这里）
 # 对应任务书：第二次团队作业 —— 高贝塔股票是否获得更高收益
 #
-# 数据源经实测选定（探测记录见 docs/数据源探测.md）：
+# 数据源经实测选定（探测记录见 ai_log/）：
 #   - 股票名单：上交所/深交所官方接口（含退市名单）
-#   - 行业分类：申万一级行业（31 类）
-#   - 个股行情：腾讯财经 月度后复权（含分红再投资，含退市股历史）
+#   - 行业分类：冻结日证监会行业大类，保留 updateDate
+#   - 个股行情：baostock 月度后复权（主来源统一；保留零成交量记录）
 #   - 市场指数：中证指数官网 H00985 中证全指全收益（官方全收益口径）
 #   - 无风险利率：中债国债收益率曲线 1 年期
 # ============================================================
@@ -36,6 +36,8 @@ sample:
   extra_candidates: 40          # 基础池之外追加的候选（用于补足 48 个月规则剔除的部分）
   boards: ["沪市主板", "科创板", "深市主板", "创业板"]
   industry_unknown_label: "未分类"
+  listing_snapshot: data/snapshots/listings_2026-10-23.csv
+  industry_snapshot: data/snapshots/industry_2019-12-31.csv
 
 # ---------------- 市场基准 ----------------
 market:
@@ -45,12 +47,6 @@ market:
     name: "中证全指全收益"
     kind: total_return
     url: "https://www.csindex.com.cn/csindex-home/perf/index-perf"
-  fallback:
-    provider: tencent
-    symbol: "sh000985"
-    name: "中证全指"
-    kind: price
-    url: "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
 
 # ---------------- 无风险利率 ----------------
 # 1 年期国债到期收益率；年化 -> 月度：compound = (1+y)^(1/12)-1
@@ -64,16 +60,18 @@ riskfree:
 
 # ---------------- 收益率口径 ----------------
 returns:
-  adjust: hfq                    # 腾讯复权口径：hfq=后复权（含分红再投资）
+  provider: baostock
+  adjust: hfq                    # 统一后复权；baostock 对应 adjustflag=1，仍需现金流算法核查
   min_close: 0.01
 
 # ---------------- 缺失值处理 ----------------
-# full_month_suspension: zero_marked -> 整月停牌收益记 0 但打标（经济真实值，不是填补）
+# full_month_suspension: zero_marked -> 仅对有独立来源证据的整月停牌延续价格
 #                        strict      -> 整月停牌记缺失（用于敏感性检验）
-# missing_return: drop_from_portfolio_average -> 组合均值只用可得成员（恢复等权）
+# missing_return: drop_from_portfolio_average -> 可得成员统计均值，不代表可交易退出
 missing:
-  full_month_suspension: zero_marked
+  full_month_suspension: strict
   missing_return: drop_from_portfolio_average
+  verified_events: data/snapshots/verified_monthly_events.csv
 
 # ---------------- 组合构建 ----------------
 portfolio:
@@ -88,6 +86,7 @@ regression:
   intercept: true
   cov_type: HAC                  # 报告主口径：Newey-West
   hac_maxlags: 6
+  min_test_months: 12
   ols_cov_type: nonrobust        # 定义法核对时与普通 OLS 对齐
 
 # ---------------- 输出 ----------------

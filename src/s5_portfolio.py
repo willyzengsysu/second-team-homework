@@ -34,9 +34,10 @@ from src.common import (
 )
 
 
-def ols_alpha_beta(y: pd.Series, x: pd.Series, hac_lags: int | None) -> dict | None:
+def ols_alpha_beta(y: pd.Series, x: pd.Series, hac_lags: int | None,
+                   min_obs: int = 12) -> dict | None:
     df = pd.concat([y.rename("y"), x.rename("x")], axis=1).dropna()
-    if len(df) < 12:
+    if len(df) < min_obs or df["x"].std(ddof=1) == 0:
         return None
     X = sm.add_constant(df["x"], has_constant="add")
     fit = (sm.OLS(df["y"], X).fit(cov_type="HAC", cov_kwds={"maxlags": hac_lags})
@@ -101,9 +102,11 @@ def main(argv: list[str] | None = None) -> None:
     hac = cfg["regression"]["hac_maxlags"] if cfg["regression"]["cov_type"] == "HAC" else None
 
     # ---- 1. 按历史贝塔排序分组（等数量）----
-    beta = beta.sort_values("beta").reset_index(drop=True)
+    beta = beta.sort_values(["beta", "code"], kind="stable").reset_index(drop=True)
     labels = pf["group_labels"]
     beta["group"] = pd.cut(beta.index, bins=pf["n_groups"], labels=labels, include_lowest=True)
+    save_csv(beta[["code", "name", "industry", "beta", "group"]],
+             paths["tables"] / "portfolio_membership.csv")
     log.info("分组完成：%s", beta.groupby("group", observed=False).size().to_dict())
 
     test = set(str(p) for p in test_months(cfg))
@@ -120,6 +123,7 @@ def main(argv: list[str] | None = None) -> None:
         .reset_index()
         .rename(columns={"mean": "ret", "count": "n_members"})
     )
+    save_csv(port[["period", "group", "n_members"]], paths["tables"] / "portfolio_member_counts.csv")
     wide = port.pivot(index="period", columns="group", values="ret")
     wide = wide.reindex(columns=labels)
     wide["mret"] = mret
@@ -168,7 +172,7 @@ def main(argv: list[str] | None = None) -> None:
         "high_group": labels[-1], "low_group": labels[0],
         "n_months": int(d.notna().sum()),
         "mean_diff_monthly": float(d.mean()),
-        "mean_diff_annual": float((1 + d.mean()) ** 12 - 1),
+        "mean_diff_annual": float(12 * d.mean()),
         "std_diff": float(d.std(ddof=1)),
         "t_stat": float(d.mean() / (d.std(ddof=1) / np.sqrt(d.notna().sum()))),
         "ci95_t_low": lo_t, "ci95_t_high": hi_t,
@@ -176,30 +180,45 @@ def main(argv: list[str] | None = None) -> None:
         "ci95_boot_low": lo_b, "ci95_boot_high": hi_b,
         "conclusion": verdict,
     }])
+    capm_hl = ols_alpha_beta(d, wide["mret"] - wide["rf"], hac)
+    hl["beta_diff"] = capm_hl["beta"]
+    hl["capm_predicted_diff"] = capm_hl["beta"] * float((wide["mret"] - wide["rf"]).mean())
+    hl["alpha_diff"] = capm_hl["alpha"]
+    hl["se_alpha_diff"] = capm_hl["se_alpha"]
+    hl["p_alpha_diff"] = capm_hl["p_alpha"]
+    hl["ci95_alpha_low"] = capm_hl["alpha"] - 1.96 * capm_hl["se_alpha"]
+    hl["ci95_alpha_high"] = capm_hl["alpha"] + 1.96 * capm_hl["se_alpha"]
     save_csv(hl, paths["tables"] / "hl_diff.csv")
     save_csv(d.rename("diff").reset_index().rename(columns={"index": "period"}),
              paths["tables"] / "hl_diff_monthly.csv")
     log.info("H−L 月度差 %.4f（年化 %.2f%%），t=%.2f，95%%CI [%.4f, %.4f]，%s",
-             d.mean(), ((1 + d.mean()) ** 12 - 1) * 100, hl["t_stat"].iloc[0], lo_t, hi_t, verdict)
+             d.mean(), 12 * d.mean() * 100, hl["t_stat"].iloc[0], lo_t, hi_t, verdict)
 
     # ---- 5. 个股检验期统计（用于个股 SML）----
-    rows = []
+    rows, test_exclusions = [], []
     for code, g in tp.groupby("code"):
         g = g.set_index("period").sort_index()
-        r = ols_alpha_beta(g["ret_ex"], g["mret_ex"], hac)
+        paired = g[["ret_ex", "mret_ex"]].dropna()
+        min_test = cfg["regression"]["min_test_months"]
+        r = ols_alpha_beta(g["ret_ex"], g["mret_ex"], hac, min_test)
         if r is None:
+            test_exclusions.append({"code": code, "name": g["name"].iloc[0],
+                "n_obs": len(paired), "reason": f"有效配对月不足 {min_test} 或市场方差为零"})
             continue
         rows.append({
             "code": code, "name": g["name"].iloc[0], "industry": g["industry"].iloc[0],
             "beta_hist": float(g["beta"].iloc[0]),
             "beta_test": r["beta"], "se_beta": r["se_beta"],
             "alpha": r["alpha"], "se_alpha": r["se_alpha"], "p_alpha": r["p_alpha"],
-            "mean_excess_ret": float(g["ret_ex"].mean()),
+            "mean_excess_ret": float(paired["ret_ex"].mean()),
+            "mean_market_excess_matched": float(paired["mret_ex"].mean()),
             "n_obs": r["n_obs"],
             "group": str(g["group"].iloc[0]),
         })
     stock = pd.DataFrame(rows).sort_values("beta_test").reset_index(drop=True)
     save_csv(stock, paths["tables"] / "stock_test.csv")
+    save_csv(pd.DataFrame(test_exclusions, columns=["code", "name", "n_obs", "reason"]),
+             paths["tables"] / "stock_test_exclusions.csv")
     log.info("个股检验期：%d 只，贝塔均值 %.3f", len(stock), stock["beta_test"].mean())
 
     # ---- 6. 贝塔稳定性 ----

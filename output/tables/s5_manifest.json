@@ -1,8 +1,25 @@
 {
   "stage": "s5_portfolio",
-  "timestamp": "2026-10-24T00:27:38",
-  "git_rev": "366ee5d",
-  "config_sha256": "f71bebb1d0f1b4190a5df47333b8b620f1a3d733698d69b979b04528435da825",
+  "timestamp": "2026-10-28T00:30:12",
+  "git_rev": "010c52d",
+  "config_sha256": "c8eb4b1f8fde381397d84399eec242b84464776cb88ab1f8be1b3ee3ba0e405d",
+  "source_sha256": {
+    "src\\__init__.py": "5befd0e32776c76f69273dce74e433a75754f15cef0f4d1c3744fbd9df23c20c",
+    "src\\common.py": "5a97b4cffc4cdd7f364ed09b21b42a0c8817ab3c7d6feece00f58f30352e6635",
+    "src\\data_sources.py": "8fd6ea2baebe8d586dae05b7bcd041ddcb0b1c413992dbca7a48a095737f07b3",
+    "src\\report_content.py": "61bedaf344decd20adff3b11ddfe483b4585a96ecc1d837380c1080eb6a7564b",
+    "src\\s1_universe.py": "23d34bd5cd7bc3bb2534570b5f6b721ac405b5d17d5c8e9500ee3a1ff0b34c8c",
+    "src\\s2_fetch.py": "6230c46b52484beeacb730a940c26f08e557955d7cf1cefae81d043a07ad1a08",
+    "src\\s3_clean.py": "0938f730eeb19a64974167e169e08264fb5fee1551364d50906fa070c6dfc56b",
+    "src\\s4_beta.py": "651e640355f98127b83b62ebe8686870c70a6e71a741cb6a31f9cecbdf6cddf1",
+    "src\\s5_portfolio.py": "b5a638882e4f75fb6ae64d691e6339dda73380aaae71172aa52f4dec6defa595",
+    "src\\s5_robustness.py": "4b198152f59bbc97223be4a10e111b03afafbcc1b9224ec75eb85b2b4eec72f6",
+    "src\\s6_figures.py": "18285c846a1a78152a4fb1b38576ec8470f0785e0084607a7e88597c556f836f",
+    "src\\s7_report_tables.py": "b10c9775b4271696c3d4d59d69d08fb3f04e8df3e658e143c746b9db47d1bb2b",
+    "scripts\\build_report_pdf.py": "444c707932b556c4806bc7a281780eae42a5bdbfbe79f79ca7e473a01df7a8b7",
+    "scripts\\run_all.py": "d4d616a3cbb66b858ecae367e53e27091581232961eee64aa7de5b64e5864ac5",
+    "scripts\\verify_outputs.py": "d7dc2a031b6538e033427679fa960c654985a6573815269153759d048db35980"
+  },
   "versions": {
     "pandas": "2.3.3",
     "numpy": "2.5.4",
@@ -21,12 +38,12 @@
       "G4",
       "G5(高β)"
     ],
-    "hl_mean_monthly": 0.004895324519652851,
+    "hl_mean_monthly": -0.00202026934881107,
     "hl_ci_t": [
-      -0.007031127650288846,
-      0.016821776689594548
+      -0.014818812010670396,
+      0.010778273313048255
     ],
-    "spearman": 0.3235617481346124,
+    "spearman": 0.2015623572407492,
     "group_beta_monotonic": false
   }
 }

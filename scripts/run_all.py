@@ -26,6 +26,7 @@ STAGES = [
     ("s3", "src.s3_clean", "清洗与面板构建"),
     ("s4", "src.s4_beta", "估计期贝塔与定义法核对"),
     ("s5", "src.s5_portfolio", "五组合与检验期分析"),
+    ("s5r", "src.s5_robustness", "固定样本与分组的敏感性分析"),
     ("s6", "src.s6_figures", "SML 作图"),
     ("s7", "src.s7_report_tables", "报告表格与数字锁定"),
 ]

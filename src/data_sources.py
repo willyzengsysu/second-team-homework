@@ -1,9 +1,9 @@
-"""数据源：一处一个来源，不做多级 fallback。
+"""数据源：主分析每类数据统一一个来源，不做静默多级 fallback。
 
 来源分工（均为免费接口）
   股票名单    akshare 交易所官方接口（含退市名单）
   行业分类    baostock 证监会行业表（一次调用返回全市场）
-  个股行情    akshare.stock_zh_a_hist_tx（腾讯，后复权，覆盖退市股）
+  个股行情    baostock 后复权月线；腾讯接口仅保留作历史来源诊断
   市场指数    中证指数官网 H00985（中证全指全收益）
   无风险利率  akshare.bond_china_yield（中债国债 1 年期）
 
@@ -165,13 +165,13 @@ _CSRC_SECTOR = {
 }
 
 
-def fetch_industry() -> pd.DataFrame:
-    """证监会行业分类（门类+大类）。baostock 一次调用返回全市场，含部分退市股。"""
+def fetch_industry(asof: str) -> pd.DataFrame:
+    """返回带 updateDate 的历史行业快照，不退回当前行业分类。"""
     import baostock as bs
 
     login = retry(lambda: bs.login(), label="baostock 登录")
     try:
-        rs = bs.query_stock_industry()
+        rs = bs.query_stock_industry(date=asof)
         if rs.error_code != "0":
             raise DataSourceError(f"query_stock_industry: {rs.error_msg}")
         rows = []
@@ -184,28 +184,49 @@ def fetch_industry() -> pd.DataFrame:
             pass
 
     df = pd.DataFrame(rows, columns=rs.fields)
-    df["code"] = df["code"].str.split(".").str[1]
-    df["industry"] = df["industry"].fillna("").astype(str).str.strip()
-    df["sector"] = df["industry"].str[:1].map(_CSRC_SECTOR).fillna("")
-    return df[["code", "industry", "sector"]]
+    if df.empty:
+        raise DataSourceError(f"历史行业 {asof} 返回空表")
+    return df
 
 
 # --------------------------------------------------------------------------
 # 个股行情：日频 -> 月频
 # --------------------------------------------------------------------------
-def fetch_stock_daily(code: str, start: str, end: str, adjust: str = "hfq") -> pd.DataFrame:
-    """个股日行情（腾讯源，后复权含分红）。覆盖已退市股票的历史区间。"""
-    df = retry(
-        lambda: ak.stock_zh_a_hist_tx(symbol=ts_code(code), start_date=start, end_date=end, adjust=adjust),
-        label=f"{code} 日行情",
-        retries=3,
-    )
-    if df is None or df.empty:
+def fetch_stock_prices(code: str, start: str, end: str, adjust: str = "hfq") -> pd.DataFrame:
+    """腾讯月 K 线，同源直接请求；绕过 AKShare 无超时的起始日期探测。
+
+    一次请求覆盖完整月度窗口，保留实际末次交易日期，不补停牌月。
+    640 根上限足以覆盖本作业 121 个月；更长窗口显式报错。
+    """
+    if len(pd.period_range(pd.Timestamp(start), pd.Timestamp(end), freq="M")) > 640:
+        raise ValueError("腾讯月线窗口超过 640 月，需分段请求")
+    symbol = ts_code(code)
+    def get():
+        response = _session.get(
+            "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+            params={"param": f"{symbol},month,{pd.Timestamp(start):%Y-%m-%d},{pd.Timestamp(end):%Y-%m-%d},640,{adjust}"},
+            timeout=30,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if payload.get("code", 0) != 0:
+            raise DataSourceError(f"腾讯返回错误：{payload.get('msg')}")
+        data = payload.get("data", {}).get(symbol, {})
+        key = f"{adjust}month" if adjust else "month"
+        bars = data.get(key)
+        # 对要求复权的请求不接受未复权 month 字段，避免静默改变口径。
+        if bars is None:
+            if not data:
+                return pd.DataFrame(columns=["date", "close"])
+            raise DataSourceError(f"腾讯 {code} 缺少 {key}，实际字段 {list(data)}")
+        return pd.DataFrame([{"date": bar[0], "close": bar[2]} for bar in bars])
+    out = retry(get, label=f"{code} 腾讯月线")
+    if out.empty:
         return pd.DataFrame(columns=["date", "close"])
-    out = df.rename(columns={"date": "date", "close": "close"})[["date", "close"]].copy()
-    out["date"] = pd.to_datetime(out["date"])
-    out["close"] = pd.to_numeric(out["close"], errors="coerce")
-    return out.dropna().drop_duplicates(subset="date").sort_values("date").reset_index(drop=True)
+    out["date"] = pd.to_datetime(out.date)
+    out["close"] = pd.to_numeric(out.close, errors="coerce")
+    out = out[out.date.between(pd.Timestamp(start), pd.Timestamp(end))]
+    return out.drop_duplicates("date").sort_values("date").reset_index(drop=True)
 
 
 def to_monthly(daily: pd.DataFrame) -> pd.DataFrame:
@@ -214,8 +235,31 @@ def to_monthly(daily: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(columns=["period", "date", "close"])
     d = daily.copy()
     d["period"] = pd.PeriodIndex(pd.to_datetime(d["date"]), freq="M")
-    m = d.sort_values("date").groupby("period", as_index=False).last()[["period", "date", "close"]]
+    cols = ["period", "date", "close"] + (["volume"] if "volume" in d else [])
+    m = d.sort_values("date").groupby("period", as_index=False).last()[cols]
     return m.reset_index(drop=True)
+
+
+def fetch_baostock_monthly(code: str, start: str, end: str) -> pd.DataFrame:
+    """须由调用者登录；单一来源后复权月线，保留零成交量信息供清洗审计。"""
+    import baostock as bs
+    symbol = ts_code(code)
+    rs = bs.query_history_k_data_plus(
+        symbol[:2] + "." + symbol[2:], "date,code,close,volume",
+        start_date=pd.Timestamp(start).strftime("%Y-%m-%d"),
+        end_date=pd.Timestamp(end).strftime("%Y-%m-%d"), frequency="m", adjustflag="1")
+    if rs.error_code != "0":
+        raise DataSourceError(f"baostock {code}: {rs.error_code} {rs.error_msg}")
+    rows = []
+    while rs.error_code == "0" and rs.next():
+        rows.append(rs.get_row_data())
+    out = pd.DataFrame(rows, columns=rs.fields)
+    if out.empty:
+        return pd.DataFrame(columns=["date", "close", "volume"])
+    out["date"] = pd.to_datetime(out.date)
+    for col in ["close", "volume"]:
+        out[col] = pd.to_numeric(out[col], errors="coerce")
+    return out[["date", "close", "volume"]]
 
 
 # --------------------------------------------------------------------------

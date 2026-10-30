@@ -107,12 +107,16 @@ def main(argv: list[str] | None = None) -> None:
     # 表 4 H−L
     t4 = pd.DataFrame([
         ["最高−最低组月度收益差均值", fmt(hl["mean_diff_monthly"], 5)],
-        ["对应年化", pct(hl["mean_diff_annual"])],
+        ["算术年化均值（12×月均差，非实际复合收益）", pct(hl["mean_diff_annual"])],
         ["t 统计量", fmt(hl["t_stat"], 2)],
         ["95% CI（t 分布）", f"[{fmt(hl['ci95_t_low'], 5)}, {fmt(hl['ci95_t_high'], 5)}]"],
         ["95% CI（Newey–West）", f"[{fmt(hl['ci95_hac_low'], 5)}, {fmt(hl['ci95_hac_high'], 5)}]"],
         ["95% CI（分块自助法）", f"[{fmt(hl['ci95_boot_low'], 5)}, {fmt(hl['ci95_boot_high'], 5)}]"],
         ["结论", hl["conclusion"]],
+        ["高低组实际贝塔差", fmt(hl["beta_diff"])],
+        ["CAPM 基准预测收益差（月度）", pct(hl["capm_predicted_diff"])],
+        ["高低组 α（月度）", pct(hl["alpha_diff"])],
+        ["α 的 HAC p 值", fmt(hl["p_alpha_diff"], 3)],
     ], columns=["指标", "数值"])
     parts.append("## 表 4 最高与最低历史贝塔组合的收益差\n\n" + md_table(t4) + "\n")
 
@@ -148,10 +152,13 @@ def main(argv: list[str] | None = None) -> None:
         "beta_est_mean": float(beta["beta"].mean()),
         "beta_est_median": float(beta["beta"].median()),
         "beta_check_max_diff": float(check["abs_diff"].max()),
+        "beta_identity_max_diff": float(load_csv(t / "beta_identity.csv")["abs_diff"].max()),
         "group_beta_test": port["beta_test"].round(6).tolist(),
         "group_mean_excess": port["mean_excess_ret"].round(6).tolist(),
         "group_alpha": port["alpha_monthly"].round(6).tolist(),
         "hl_mean_monthly": float(hl["mean_diff_monthly"]),
+        "hl_alpha_monthly": float(hl["alpha_diff"]),
+        "hl_alpha_p": float(hl["p_alpha_diff"]),
         "hl_ci_t": [float(hl["ci95_t_low"]), float(hl["ci95_t_high"])],
         "hl_ci_boot": [float(hl["ci95_boot_low"]), float(hl["ci95_boot_high"])],
         "spearman": float(stab["spearman_rho"]),
@@ -160,12 +167,23 @@ def main(argv: list[str] | None = None) -> None:
         "sml_portfolio": sml.loc[sml["scope"] == "组合"].iloc[0].drop("scope").to_dict(),
         "n_stocks_test": int(len(stock)),
         "sources": {
-            name: sha256_file(t / name)[:16]
+            name: sha256_file(t / name)
             for name in ["beta_est.csv", "portfolio_stats.csv", "hl_diff.csv",
-                         "beta_stability.csv", "sml_fit.csv"]
+                         "beta_stability.csv", "sml_fit.csv", "capm_deviations.csv",
+                         "stock_test.csv", "stock_test_exclusions.csv", "portfolio_membership.csv",
+                         "portfolio_member_counts.csv", "robustness.csv", "beta_identity.csv"]
         },
         "manifest": run_manifest(cfg, "s7_report"),
     }
+    from src.report_content import write_report
+    report_path = write_report(cfg)
+    lock["report_sha256"] = sha256_file(report_path)
+    from src.common import ROOT
+    lock["inputs"] = {str(p.relative_to(ROOT)).replace("\\", "/"): sha256_file(p) for p in [
+        paths["processed"] / "panel_monthly.csv", paths["processed"] / "sample.csv",
+        paths["interim"] / "market_monthly.csv", paths["interim"] / "rf_monthly.csv",
+        paths["interim"] / "price_cache_manifest.csv", paths["interim"] / "terminal_quote_audit.csv",
+    ]}
     save_json(lock, t / "numbers_lock.json")
     log.info("数字锁定：%s", t / "numbers_lock.json")
 

@@ -1,72 +1,99 @@
 {
   "sample_n": 200,
-  "industries": 54,
-  "beta_est_mean": 1.1906468758382283,
-  "beta_est_median": 1.235193910347411,
-  "beta_check_max_diff": 4.440892098500626e-16,
+  "industries": 59,
+  "beta_est_mean": 1.2265351484734808,
+  "beta_est_median": 1.2441447218375146,
+  "beta_check_max_diff": 8.881784197001252e-16,
+  "beta_identity_max_diff": 1.7763568394002505e-15,
   "group_beta_test": [
-    0.778355,
-    0.912913,
-    0.854961,
-    1.019478,
-    1.12445
+    0.92311,
+    0.914777,
+    0.963417,
+    1.131129,
+    1.128277
   ],
   "group_mean_excess": [
-    0.002767,
-    0.005987,
-    0.00627,
-    0.0073,
-    0.007663
+    0.007859,
+    0.004636,
+    0.005892,
+    0.0088,
+    0.005839
   ],
   "group_alpha": [
-    0.001027,
-    0.003946,
-    0.004358,
-    0.00502,
-    0.005149
+    0.005795,
+    0.00259,
+    0.003738,
+    0.006271,
+    0.003316
   ],
-  "hl_mean_monthly": 0.0048953245196528,
+  "hl_mean_monthly": -0.002020269348811,
+  "hl_alpha_monthly": -0.0024790081364995,
+  "hl_alpha_p": 0.5812792182345672,
   "hl_ci_t": [
-    -0.0070311276502888,
-    0.0168217766895945
+    -0.0148188120106703,
+    0.0107782733130482
   ],
   "hl_ci_boot": [
-    -0.0074233204449149,
-    0.0178007858253276
+    -0.0122902745614971,
+    0.0107552694156857
   ],
-  "spearman": 0.3235617481346124,
-  "beta_slope_test_on_hist": 0.3153799257993596,
+  "spearman": 0.2015623572407492,
+  "beta_slope_test_on_hist": 0.2198386370035502,
   "sml_individual": {
     "n": 199,
-    "intercept": -0.0038247294699928,
-    "slope": 0.0096988886733039,
-    "se_intercept": 0.0030318339444169,
-    "se_slope": 0.0032721078280011,
-    "r2": 0.0605967343045742,
-    "resid_sd": 0.0136117622037591
+    "intercept": -0.0030491279580683,
+    "slope": 0.0086287851587824,
+    "se_intercept": 0.0041467375386309,
+    "se_slope": 0.0039146358288174,
+    "r2": 0.04022674914325,
+    "resid_sd": 0.0158261756012834
   },
   "sml_portfolio": {
     "n": 5,
-    "intercept": -0.0054729436317886,
-    "slope": 0.0122280136111424,
-    "se_intercept": 0.0045464643479155,
-    "se_slope": 0.0044853441342331,
-    "r2": 0.7429106780869553,
-    "resid_sd": 0.0009811284891208
+    "intercept": 0.0004806309374689,
+    "slope": 0.0060511024780692,
+    "se_intercept": 0.0088912453143968,
+    "se_slope": 0.0087721681903213,
+    "r2": 0.1528277247818809,
+    "resid_sd": 0.0015513115327177
   },
   "n_stocks_test": 199,
   "sources": {
-    "beta_est.csv": "09442643ebba3cc3",
-    "portfolio_stats.csv": "4c82929a92fcf473",
-    "hl_diff.csv": "a21972205fcf3f99",
-    "beta_stability.csv": "429b7e24a1d8a072",
-    "sml_fit.csv": "10809ae789bd4be9"
+    "beta_est.csv": "42a6bd96260626a8c88f02a566128ab333f86c1aa2e5d31f1b513f304aae0c4e",
+    "portfolio_stats.csv": "22458edca6a505773f522912797ae14aacab9204254f2af3148ebc92adeecfd1",
+    "hl_diff.csv": "8d9789906b5fd55d38600e6237de4affab1660ef89f8f66acc0468d5dfdc14d8",
+    "beta_stability.csv": "c9b1443defabb15f61a25857f01be30c43570b9607b1363b647d63907d8e3d33",
+    "sml_fit.csv": "0d6c0498321542decc150f1a54c395ce37ae94814842fce6ffc4537b0af6bbb1",
+    "capm_deviations.csv": "218fb4cc2ee5d65d872b4d9753cd78891914ff0a463823ed00679cbc11eea0b7",
+    "stock_test.csv": "905c60936499855030caab3c2b9de411049ddce325a72b5da5336edf237611d3",
+    "stock_test_exclusions.csv": "41d07d225815fde460c7f65d38bfcc6691faa79e8846c6bafdef78a6bfa6808c",
+    "portfolio_membership.csv": "070838542c4c4f66e48745a413748498d75bc3c9b003d86befa9dafa934f78d2",
+    "portfolio_member_counts.csv": "ebaa637e4f8cd51de5f1d39816656aac02531eb5dab9ac0f15f43f85df8e82c3",
+    "robustness.csv": "8998666971bdc14cb366487febb3f561424bd4610f639106b35d09051e36612d",
+    "beta_identity.csv": "d276ce3b9c28a8436624c4a8026dfd3e35af2bb721dba0e53bd0c7e0b0f2bdaf"
   },
   "manifest": {
     "stage": "s7_report",
-    "timestamp": "2026-10-24T00:27:39",
-    "git_rev": "366ee5d",
-    "config_sha256": "f71bebb1d0f1b4190a5df47333b8b620f1a3d733698d69b979b04528435da825",
+    "timestamp": "2026-10-28T11:45:32",
+    "git_rev": "010c52d",
+    "config_sha256": "c8eb4b1f8fde381397d84399eec242b84464776cb88ab1f8be1b3ee3ba0e405d",
+    "source_sha256": {
+      "src\\__init__.py": "5befd0e32776c76f69273dce74e433a75754f15cef0f4d1c3744fbd9df23c20c",
+      "src\\common.py": "5a97b4cffc4cdd7f364ed09b21b42a0c8817ab3c7d6feece00f58f30352e6635",
+      "src\\data_sources.py": "8fd6ea2baebe8d586dae05b7bcd041ddcb0b1c413992dbca7a48a095737f07b3",
+      "src\\report_content.py": "c9daf28f493867d186372aea80d3ccd5f2c7674efc0a3fb77fc2d42d3d1b8299",
+      "src\\s1_universe.py": "23d34bd5cd7bc3bb2534570b5f6b721ac405b5d17d5c8e9500ee3a1ff0b34c8c",
+      "src\\s2_fetch.py": "6230c46b52484beeacb730a940c26f08e557955d7cf1cefae81d043a07ad1a08",
+      "src\\s3_clean.py": "0938f730eeb19a64974167e169e08264fb5fee1551364d50906fa070c6dfc56b",
+      "src\\s4_beta.py": "651e640355f98127b83b62ebe8686870c70a6e71a741cb6a31f9cecbdf6cddf1",
+      "src\\s5_portfolio.py": "b5a638882e4f75fb6ae64d691e6339dda73380aaae71172aa52f4dec6defa595",
+      "src\\s5_robustness.py": "4b198152f59bbc97223be4a10e111b03afafbcc1b9224ec75eb85b2b4eec72f6",
+      "src\\s6_figures.py": "18285c846a1a78152a4fb1b38576ec8470f0785e0084607a7e88597c556f836f",
+      "src\\s7_report_tables.py": "b10c9775b4271696c3d4d59d69d08fb3f04e8df3e658e143c746b9db47d1bb2b",
+      "scripts\\build_report_pdf.py": "68f90108d3b64aa84f7e614a5f5b34b4a6ec064ebed4bc8022bf9edf9a39c7f2",
+      "scripts\\run_all.py": "d4d616a3cbb66b858ecae367e53e27091581232961eee64aa7de5b64e5864ac5",
+      "scripts\\verify_outputs.py": "d7dc2a031b6538e033427679fa960c654985a6573815269153759d048db35980"
+    },
     "versions": {
       "pandas": "2.3.3",
       "numpy": "2.5.4",
@@ -78,5 +105,14 @@
       "python": "3.12.14"
     },
     "extra": {}
+  },
+  "report_sha256": "6c50519f20126bd39ac0b511be68746d875736492c84f231afd5151c49d87017",
+  "inputs": {
+    "data/processed/panel_monthly.csv": "1f265ea2f7e8379c7cf53a236316b7c55b0e05bf509c7d40a366373043e99e79",
+    "data/processed/sample.csv": "989d7d38c5d28cf4e9afec39ce7ca0f0825aad73541da7da99f31d7b0ecd0b98",
+    "data/interim/market_monthly.csv": "88d9bff1cdba17859b594d71e81b2a7a17362b73a647d7b80ffb175912581abe",
+    "data/interim/rf_monthly.csv": "08c07292fff0ee67a1adb08469f849f0404a433bbefe134520e056e1016e1d41",
+    "data/interim/price_cache_manifest.csv": "52cf6f268b24fb2400aeefe82a7543db0db1c482ac3bb2d2c74c13fbefe8e1e7",
+    "data/interim/terminal_quote_audit.csv": "d58b968809e7eaebc08513d85f683ce7bd79337e2fbba53ed2bff1496d0d70d9"
   }
 }

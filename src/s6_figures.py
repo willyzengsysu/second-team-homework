@@ -17,6 +17,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.ticker import PercentFormatter  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import statsmodels.api as sm  # noqa: E402
@@ -82,6 +83,7 @@ def plot_sml(ax, x, y, fit, mkt_slope, title, xlim, ylim, point_labels=None, ann
     ax.set_ylim(*ylim)
     ax.set_xlabel("检验期贝塔")
     ax.set_ylabel("平均月度超额收益")
+    ax.yaxis.set_major_formatter(PercentFormatter(1.0))
     ax.set_title(title, fontsize=11)
     ax.legend(fontsize=7.5, loc="upper left")
 
@@ -107,6 +109,14 @@ def main(argv: list[str] | None = None) -> None:
 
     fit_i = cross_section_fit(stock["beta_test"], stock["mean_excess_ret"])
     fit_p = cross_section_fit(port["beta_test"], port["mean_excess_ret"])
+    deviations = []
+    for scope, data in [("个股", stock), ("组合", port),
+                        ("个股完整60月", stock[stock.n_obs.eq(len(test))])]:
+        error = data.mean_excess_ret - data.beta_test * mkt_slope
+        deviations.append({"scope": scope, "n": len(data), "mean_error": float(error.mean()),
+                           "mae": float(error.abs().mean()), "rmse": float(np.sqrt((error ** 2).mean())),
+                           "benchmark": "统一检验期市场均值，与图中基准线相同"})
+    save_csv(pd.DataFrame(deviations), paths["tables"] / "capm_deviations.csv")
     save_csv(pd.DataFrame([{"scope": "个股", **fit_i}, {"scope": "组合", **fit_p}]),
              paths["tables"] / "sml_fit.csv")
     log.info("个股 SML：截距 %.4f，斜率 %.4f，R² %.3f", fit_i["intercept"], fit_i["slope"], fit_i["r2"])
@@ -117,7 +127,7 @@ def main(argv: list[str] | None = None) -> None:
     y_all = pd.concat([stock["mean_excess_ret"], port["mean_excess_ret"]])
     pad_x = (x_all.max() - x_all.min()) * 0.06
     pad_y = (y_all.max() - y_all.min()) * 0.08
-    xlim = (max(0, x_all.min() - pad_x), x_all.max() + pad_x)
+    xlim = (min(0, x_all.min() - pad_x), x_all.max() + pad_x)
     ylim = (min(y_all.min(), 0) - pad_y, max(y_all.max(), 0) + pad_y)
 
     fig, ax = plt.subplots(figsize=(8, 5.6))
@@ -168,6 +178,7 @@ def main(argv: list[str] | None = None) -> None:
     ax.set_xticks(idx)
     ax.set_xticklabels(port["group"], fontsize=9)
     ax.set_ylabel("平均月度超额收益")
+    ax.yaxis.set_major_formatter(PercentFormatter(1.0))
     ax.set_title("五组合平均月度超额收益（检验期）", fontsize=11)
     fig.tight_layout()
     fig.savefig(paths["figures"] / "fig5_group_return.png", bbox_inches="tight")

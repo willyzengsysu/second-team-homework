@@ -19,6 +19,14 @@ logs/*
 ~$*
 .DS_Store
 Thumbs.db
+tmp/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.vscode/
+.idea/
 
 # ---------- 说明 ----------
 # data/interim、data/processed、output/ 体积小且是交付物证据，保留入库

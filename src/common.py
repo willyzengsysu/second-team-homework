@@ -43,6 +43,11 @@ def ensure_dirs(cfg: dict) -> None:
         p.mkdir(parents=True, exist_ok=True)
 
 
+def price_cache_dir(cfg: dict) -> Path:
+    """按来源分开缓存，避免把另一家价格静默当作当前主来源。"""
+    return project_paths(cfg)["raw"] / ("prices_" + cfg["returns"]["provider"])
+
+
 def get_logger(cfg: dict | None = None, name: str = "capm") -> logging.Logger:
     """控制台 + 文件双写日志（同一文件追加，便于事后追溯）。"""
     global _LOGGER
@@ -160,7 +165,9 @@ def run_manifest(cfg: dict, stage: str, extra: dict | None = None) -> dict:
         "stage": stage,
         "timestamp": datetime.now().isoformat(timespec="seconds"),
         "git_rev": git_rev(),
-        "config_sha256": sha256_file(CONFIG_PATH),
+        "config_sha256": sha256_text(json.dumps(cfg, sort_keys=True, ensure_ascii=False)),
+        "source_sha256": {str(p.relative_to(ROOT)): sha256_file(p)
+                          for folder in ["src", "scripts"] for p in sorted((ROOT / folder).glob("*.py"))},
         "versions": package_versions(),
         "extra": extra or {},
     }
