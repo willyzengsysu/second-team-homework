@@ -3,30 +3,104 @@ from __future__ import annotations
 
 import html
 import re
+import hashlib
+import io
+from functools import lru_cache
 from pathlib import Path
 
+import matplotlib
+matplotlib.use("Agg")
+from matplotlib.font_manager import FontProperties
+from matplotlib.mathtext import MathTextParser, math_to_image
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table,
-                               TableStyle, PageBreak, Image)
+from reportlab.platypus import (SimpleDocTemplate, Paragraph as BaseParagraph, Spacer, Table,
+                               TableStyle, PageBreak, Image, Flowable)
 from pypdf import PdfReader
 
 ROOT = Path(__file__).resolve().parents[1]
 PAGE_W, PAGE_H = A4
 WIDTH = PAGE_W - 100
+MATH_PARSER = MathTextParser("path")
+MATH_CACHE = ROOT / "tmp/pdfs/math"
 
 
-def inline(text):
+class Paragraph(BaseParagraph):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ReportLab 的 CJK 换行器会对图像的空 text 调用 ord()。
+        # 对象替代符使图像作为一个不可拆分字符参与换行；实际绘制仍由 cbDefn 执行。
+        for frag in self.frags:
+            if not frag.text and getattr(getattr(frag, "cbDefn", None), "kind", None) == "img":
+                frag.text = "\ufffc"
+
+
+@lru_cache(maxsize=256)
+def math_layout(expression, size):
+    """仅解析数学表达式，不调用外部 TeX 或 shell。"""
+    prop = FontProperties(size=size, math_fontfamily="stix")
+    return MATH_PARSER.parse(f"${expression}$", dpi=72, prop=prop)
+
+
+class MathFormula(Flowable):
+    """以嵌入字体和矢量分数线绘制独立公式。"""
+    def __init__(self, expression, size=11.5):
+        super().__init__()
+        self.layout = math_layout(expression, size)
+        self.width, self.height = float(self.layout.width), float(self.layout.height) + 4
+        self.hAlign = "CENTER"
+        self.spaceBefore, self.spaceAfter = 3, 7
+
+    def draw(self):
+        canvas = self.canv
+        canvas.saveState()
+        canvas.setFillColor(colors.HexColor("#24313B"))
+        offset = float(self.layout.depth) + 2
+        for glyph in self.layout.glyphs:
+            # Matplotlib 3.11 增加 glyph index；字符码和末两项坐标保持不变。
+            font, size, codepoint = glyph[:3]
+            x, y = glyph[-2:]
+            name = "Math-" + hashlib.sha256(str(font.fname).encode()).hexdigest()[:12]
+            if name not in pdfmetrics.getRegisteredFontNames():
+                pdfmetrics.registerFont(TTFont(name, font.fname))
+            canvas.setFont(name, size)
+            canvas.drawString(float(x), float(y) + offset, chr(codepoint))
+        for x, y, width, height in self.layout.rects:
+            canvas.rect(float(x), float(y) + offset, float(width), float(height), fill=1, stroke=0)
+        canvas.restoreState()
+
+
+@lru_cache(maxsize=256)
+def inline_math(expression, size):
+    """行内公式使用透明 400 dpi 图像，按数学基线与正文对齐。"""
+    layout = math_layout(expression, size)
+    MATH_CACHE.mkdir(parents=True, exist_ok=True)
+    key = hashlib.sha256(f"{size}:{expression}".encode()).hexdigest()
+    path = MATH_CACHE / f"{key}.png"
+    with matplotlib.rc_context({"savefig.transparent": True}):
+        math_to_image(f"${expression}$", path,
+                      prop=FontProperties(size=size, math_fontfamily="stix"),
+                      dpi=400, format="png", color="#24313B")
+    return (f'<img src="{path.as_posix()}" width="{float(layout.width):.3f}" '
+            f'height="{float(layout.height):.3f}" valign="{-float(layout.depth):.3f}"/>')
+
+
+def plain_inline(text):
     text = html.escape(text)
     text = text.replace("R²", "R<super>2</super>")
     text = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", text)
     text = re.sub(r"`([^`]+)`", r"\1", text)
     text = re.sub(r"\[([^\]]+)\]\((https?://[^)]+)\)", r'<link href="\2" color="#1F5575">\1</link>', text)
     return text
+
+
+def inline(text, size=10.4):
+    parts = re.split(r"(\$[^$\n]+\$)", text)
+    return "".join(inline_math(part[1:-1], size) if part.startswith("$")
+                   and part.endswith("$") else plain_inline(part) for part in parts)
 
 
 def main():
@@ -63,6 +137,20 @@ def main():
             story.append(PageBreak())
             i += 1
             continue
+        if line == "$$":
+            expression = []
+            i += 1
+            while i < len(lines) and lines[i].strip() != "$$":
+                expression.append(lines[i].strip())
+                i += 1
+            if i == len(lines):
+                raise ValueError("独立公式缺少结束 $$")
+            formula = MathFormula(" ".join(expression))
+            if formula.width > WIDTH:
+                raise ValueError(f"公式超出正文宽度：{expression}")
+            story.append(formula)
+            i += 1
+            continue
         if line.startswith("# "):
             style = "title" if not story else "h1"
             story.append(Paragraph(inline(line[2:]), styles[style]))
@@ -94,7 +182,7 @@ def main():
                 shares = [.14,.22,.23,.23,.18]
             else:
                 shares = [1/n] * n
-            data = [[Paragraph(inline(cell), styles["head" if j==0 else "cell"])
+            data = [[Paragraph(inline(cell, 8.3), styles["head" if j==0 else "cell"])
                      for cell in row] for j,row in enumerate(raw)]
             tbl = Table(data, colWidths=[WIDTH*x for x in shares], repeatRows=1, hAlign="LEFT")
             tbl.setStyle(TableStyle([
@@ -109,7 +197,7 @@ def main():
             continue
         else:
             paragraph = [line]
-            while i+1 < len(lines) and lines[i+1].strip() and not lines[i+1].lstrip().startswith(("#", "|", "![", "<!--")):
+            while i+1 < len(lines) and lines[i+1].strip() and not lines[i+1].lstrip().startswith(("#", "|", "![", "<!--", "$$")):
                 i += 1
                 paragraph.append(lines[i].strip())
             story.append(Paragraph(inline(" ".join(paragraph)), styles["body"]))
@@ -127,16 +215,22 @@ def main():
         canvas.drawString(50,29,"修订稿：成员信息、人工复核与退出事件证据待补")
         canvas.restoreState()
 
-    output = ROOT / "output/pdf/CAPM报告_修订版.pdf"
+    output = ROOT / "output/pdf/CAPM报告_公式排版版.pdf"
     output.parent.mkdir(parents=True, exist_ok=True)
-    doc = SimpleDocTemplate(str(output),pagesize=A4,rightMargin=50,leftMargin=50,
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer,pagesize=A4,rightMargin=50,leftMargin=50,
                             topMargin=54,bottomMargin=47,title="高贝塔股票是否获得更高收益？",
                             author="团队信息待填写")
     doc.build(story,onFirstPage=page_frame,onLaterPages=page_frame)
-    count = len(PdfReader(output).pages)
-    print(f"PDF: {output} ({count} pages)")
+    count = len(PdfReader(buffer).pages)
     if not 8 <= count <= 10:
         raise ValueError(f"正文 {count} 页，不满足 8-10 页要求，请调整版式后重新导出")
+    staged = ROOT / "tmp/pdfs/CAPM报告_排版检查.pdf"
+    staged.parent.mkdir(parents=True, exist_ok=True)
+    staged.write_bytes(buffer.getvalue())
+    # 先完成生成和页数检查，再替换正式产物，避免失败时破坏旧 PDF。
+    staged.replace(output)
+    print(f"PDF: {output} ({count} pages)")
 
 
 if __name__ == "__main__":

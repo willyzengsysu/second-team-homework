@@ -74,14 +74,14 @@
   },
   "manifest": {
     "stage": "s7_report",
-    "timestamp": "2026-10-28T11:45:32",
-    "git_rev": "010c52d",
+    "timestamp": "2026-10-30T21:37:54",
+    "git_rev": "27a0843",
     "config_sha256": "c8eb4b1f8fde381397d84399eec242b84464776cb88ab1f8be1b3ee3ba0e405d",
     "source_sha256": {
       "src\\__init__.py": "5befd0e32776c76f69273dce74e433a75754f15cef0f4d1c3744fbd9df23c20c",
       "src\\common.py": "5a97b4cffc4cdd7f364ed09b21b42a0c8817ab3c7d6feece00f58f30352e6635",
       "src\\data_sources.py": "8fd6ea2baebe8d586dae05b7bcd041ddcb0b1c413992dbca7a48a095737f07b3",
-      "src\\report_content.py": "c9daf28f493867d186372aea80d3ccd5f2c7674efc0a3fb77fc2d42d3d1b8299",
+      "src\\report_content.py": "3ad401de6b03ad73fea51c3bfd6e062d36afd89e2ee5772fdbbcceeb6d59e232",
       "src\\s1_universe.py": "23d34bd5cd7bc3bb2534570b5f6b721ac405b5d17d5c8e9500ee3a1ff0b34c8c",
       "src\\s2_fetch.py": "6230c46b52484beeacb730a940c26f08e557955d7cf1cefae81d043a07ad1a08",
       "src\\s3_clean.py": "0938f730eeb19a64974167e169e08264fb5fee1551364d50906fa070c6dfc56b",
@@ -90,9 +90,9 @@
       "src\\s5_robustness.py": "4b198152f59bbc97223be4a10e111b03afafbcc1b9224ec75eb85b2b4eec72f6",
       "src\\s6_figures.py": "18285c846a1a78152a4fb1b38576ec8470f0785e0084607a7e88597c556f836f",
       "src\\s7_report_tables.py": "b10c9775b4271696c3d4d59d69d08fb3f04e8df3e658e143c746b9db47d1bb2b",
-      "scripts\\build_report_pdf.py": "68f90108d3b64aa84f7e614a5f5b34b4a6ec064ebed4bc8022bf9edf9a39c7f2",
+      "scripts\\build_report_pdf.py": "0649aa348beb4120d1654354be0cb417428c9e0fe036a9d2040f74c79d7e9d12",
       "scripts\\run_all.py": "d4d616a3cbb66b858ecae367e53e27091581232961eee64aa7de5b64e5864ac5",
-      "scripts\\verify_outputs.py": "d7dc2a031b6538e033427679fa960c654985a6573815269153759d048db35980"
+      "scripts\\verify_outputs.py": "46bb8217033c96e710a344392c9dbe35e3741ac6c4c1bba3736e9c1e889730cf"
     },
     "versions": {
       "pandas": "2.3.3",
@@ -106,7 +106,7 @@
     },
     "extra": {}
   },
-  "report_sha256": "6c50519f20126bd39ac0b511be68746d875736492c84f231afd5151c49d87017",
+  "report_sha256": "4a41134066bdb9271c07da7488f16114cdadcf4b34f37c55a40a88d66c005aac",
   "inputs": {
     "data/processed/panel_monthly.csv": "1f265ea2f7e8379c7cf53a236316b7c55b0e05bf509c7d40a366373043e99e79",
     "data/processed/sample.csv": "989d7d38c5d28cf4e9afec39ce7ca0f0825aad73541da7da99f31d7b0ecd0b98",

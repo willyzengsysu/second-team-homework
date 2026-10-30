@@ -8,7 +8,7 @@
 
 | 想了解什么 | 入口 |
 |---|---|
-| 当前报告 | [PDF（9 页）](output/pdf/CAPM报告_修订版.pdf) · [网页可读正文](report/报告.md) |
+| 当前报告 | [PDF（9 页，公式排版版）](output/pdf/CAPM报告_公式排版版.pdf) · [网页可读正文](report/报告.md) |
 | 老师的要求 | [作业任务书](第二次团队作业：高贝塔股票是否获得更高收益.md) |
 | 上轮改了什么 | [项目修订说明](docs/修订说明.md) · [报告审查与润色意见](docs/报告审查与润色意见.md) |
 | 我该复核什么 | [组内复核记录与待办](docs/组内复核记录.md) |
@@ -107,7 +107,9 @@ pip install -r requirements-report.txt
 python scripts/build_report_pdf.py
 ```
 
-输出 output/pdf/CAPM报告_修订版.pdf。修改或重跑后须重新导出并检查页数、表格和图。PDF 导出单独运行，不属于需要联网的分析流水线。
+输出 output/pdf/CAPM报告_公式排版版.pdf。修改或重跑后须重新导出并检查页数、表格和图。PDF 导出单独运行，不属于需要联网的分析流水线。原 CAPM报告_修订版.pdf 保留为旧版，当前阅读入口以上表为准。
+
+正文模板使用 `$...$` 行内公式与 `$$` 独立公式（独占行）。PDF 导出用 Matplotlib MathText 排版 LaTeX 风格的数学表达式，独立公式以矢量字体与线条绘制，行内公式为透明高清图像，无需安装完整 TeX。只支持 MathText 的数学语法子集，不支持任意 LaTeX 宏包。
 
 ## 解读边界
 
